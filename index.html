@@ -4,22 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CamNote</title>
-
-  <!--
-  ╔════════════════════════════════════════════════════════════╗
-  ║  CONFIGURATION                                             ║
-  ║  Replace these values before pushing to GitHub Pages.     ║
-  ║  Never commit real keys to a public repo.                  ║
-  ╚════════════════════════════════════════════════════════════╝
-  -->
-  <script>
-    window.CONFIG = {
-      SUPABASE_URL:      'https://optzbdbavpnxstpxrpbh.supabase.co',
-      SUPABASE_ANON_KEY: 'sb_publishable_OujPUygbQI0CuYbrOub5kg_ExbErjAZ',
-      ANTHROPIC_API_KEY: 'REDACTED',
-    };
-  </script>
-
+  <!-- No API keys in this file. Keys are entered once in the app
+       and stored in your browser's localStorage. Safe to commit. -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -50,7 +36,6 @@
     body {
       min-height: 100%;
       background: var(--bg);
-      /* subtle grain texture via SVG */
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
       color: var(--ink);
       font-family: var(--serif);
@@ -68,33 +53,39 @@
     .wordmark {
       display: inline-flex;
       align-items: baseline;
-      gap: 0;
       font-size: 1.35rem;
       letter-spacing: 0.03em;
       color: var(--ink-mid);
       font-weight: normal;
     }
 
-    .wordmark em {
-      font-style: italic;
-      color: var(--ink);
-    }
+    .wordmark em { font-style: italic; color: var(--ink); }
 
     .wordmark .dot {
       display: inline-block;
-      width: 5px;
-      height: 5px;
+      width: 5px; height: 5px;
       border-radius: 50%;
       background: var(--accent);
       margin: 0 1px 3px 1px;
       flex-shrink: 0;
     }
 
-    /* ── Container ──────────────────────────────────────────────── */
-    .wrap {
-      max-width: 640px;
-      margin: 0 auto;
+    .settings-link {
+      display: block;
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      color: var(--ink-faint);
+      text-decoration: none;
+      margin-top: 6px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color 0.15s;
     }
+    .settings-link:hover { color: var(--accent); }
+
+    /* ── Container ──────────────────────────────────────────────── */
+    .wrap { max-width: 640px; margin: 0 auto; }
 
     /* ── Entry card ─────────────────────────────────────────────── */
     .entry-card {
@@ -120,13 +111,9 @@
       outline: none;
       resize: none;
       overflow: hidden;
-      transition: min-height 0.1s;
     }
 
-    textarea#noteInput::placeholder {
-      color: var(--ink-faint);
-      font-style: italic;
-    }
+    textarea#noteInput::placeholder { color: var(--ink-faint); font-style: italic; }
 
     .entry-footer {
       display: flex;
@@ -145,9 +132,9 @@
       font-style: italic;
       transition: color 0.2s;
     }
-    .status-msg.busy    { color: var(--accent); }
-    .status-msg.ok      { color: var(--success); }
-    .status-msg.bad     { color: var(--error); }
+    .status-msg.busy { color: var(--accent); }
+    .status-msg.ok   { color: var(--success); }
+    .status-msg.bad  { color: var(--error); }
 
     .hint {
       font-family: var(--sans);
@@ -170,8 +157,8 @@
       transition: background 0.15s, opacity 0.15s;
       white-space: nowrap;
     }
-    .save-btn:hover   { background: var(--accent-dim); }
-    .save-btn:active  { transform: translateY(1px); }
+    .save-btn:hover    { background: var(--accent-dim); }
+    .save-btn:active   { transform: translateY(1px); }
     .save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
     /* ── Section label ──────────────────────────────────────────── */
@@ -186,11 +173,7 @@
     }
 
     /* ── Notes list ─────────────────────────────────────────────── */
-    .notes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .notes-list { display: flex; flex-direction: column; gap: 12px; }
 
     .note-card {
       background: var(--paper);
@@ -200,9 +183,7 @@
       box-shadow: var(--shadow-sm);
       transition: box-shadow 0.18s;
     }
-    .note-card:hover {
-      box-shadow: var(--shadow-md);
-    }
+    .note-card:hover { box-shadow: var(--shadow-md); }
 
     .note-body {
       font-size: 0.95rem;
@@ -222,13 +203,7 @@
     }
 
     /* ── Tags ───────────────────────────────────────────────────── */
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      align-items: center;
-      flex: 1;
-    }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1; }
 
     .chip {
       display: inline-flex;
@@ -245,69 +220,46 @@
     }
 
     .chip-x {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--ink-faint);
-      font-size: 0.9rem;
-      line-height: 1;
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-faint); font-size: 0.9rem; line-height: 1;
       padding: 0 0 0 1px;
-      display: inline-flex;
-      align-items: center;
+      display: inline-flex; align-items: center;
       transition: color 0.12s;
     }
     .chip-x:hover { color: var(--error); }
 
     .chip-add {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-family: var(--sans);
-      font-size: 0.68rem;
-      color: var(--ink-faint);
-      background: transparent;
-      border: 1px dashed var(--border);
-      border-radius: 100px;
-      padding: 3px 8px;
-      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 3px;
+      font-family: var(--sans); font-size: 0.68rem;
+      color: var(--ink-faint); background: transparent;
+      border: 1px dashed var(--border); border-radius: 100px;
+      padding: 3px 8px; cursor: pointer;
       transition: color 0.15s, border-color 0.15s;
     }
     .chip-add:hover { color: var(--accent); border-color: var(--accent); }
 
     .chip-input {
-      font-family: var(--sans);
-      font-size: 0.7rem;
+      font-family: var(--sans); font-size: 0.7rem;
       padding: 3px 9px;
-      border: 1px solid var(--accent);
-      border-radius: 100px;
-      background: var(--paper);
-      color: var(--ink);
-      outline: none;
-      width: 90px;
+      border: 1px solid var(--accent); border-radius: 100px;
+      background: var(--paper); color: var(--ink);
+      outline: none; width: 90px;
     }
 
     .note-time {
-      font-family: var(--sans);
-      font-size: 0.68rem;
-      color: var(--ink-faint);
-      white-space: nowrap;
-      flex-shrink: 0;
+      font-family: var(--sans); font-size: 0.68rem;
+      color: var(--ink-faint); white-space: nowrap; flex-shrink: 0;
     }
 
     /* ── Empty / skeleton ───────────────────────────────────────── */
     .empty-state {
-      text-align: center;
-      padding: 40px 0 20px;
-      font-style: italic;
-      font-size: 0.9rem;
-      color: var(--ink-soft);
+      text-align: center; padding: 40px 0 20px;
+      font-style: italic; font-size: 0.9rem; color: var(--ink-soft);
     }
 
     .skeleton-card {
-      background: var(--paper);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 17px 20px 16px;
+      background: var(--paper); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 17px 20px 16px;
     }
 
     .skel {
@@ -321,7 +273,95 @@
       100% { background-position: -250% 0; }
     }
 
-    /* ── Mobile tweaks ──────────────────────────────────────────── */
+    /* ── Settings modal ─────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(30,20,8,.45);
+      backdrop-filter: blur(2px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+    .modal-backdrop.hidden { display: none; }
+
+    .modal {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      padding: 28px 28px 24px;
+      width: 100%; max-width: 460px;
+    }
+
+    .modal h2 {
+      font-family: var(--serif);
+      font-size: 1.1rem;
+      font-weight: normal;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .modal p {
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .field { margin-bottom: 14px; }
+
+    .field label {
+      display: block;
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-mid);
+      margin-bottom: 5px;
+    }
+
+    .field input {
+      width: 100%;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-ghost {
+      font-family: var(--sans); font-size: 0.82rem;
+      color: var(--ink-soft); background: none;
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 7px 16px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+    .btn-primary {
+      font-family: var(--sans); font-size: 0.82rem; font-weight: 600;
+      color: #fff; background: var(--accent);
+      border: none; border-radius: 5px;
+      padding: 7px 20px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--accent-dim); }
+
+    /* ── Mobile ─────────────────────────────────────────────────── */
     @media (max-width: 480px) {
       header { padding: 30px 0 26px; }
       .wordmark { font-size: 1.2rem; }
@@ -329,13 +369,39 @@
       .entry-footer { padding: 8px 12px 10px; }
       .hint { display: none; }
       .note-card { padding: 14px 15px 11px; }
+      .modal { padding: 22px 18px 18px; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Settings modal -->
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal">
+      <h2>Connect CamNote</h2>
+      <p>Keys are saved to your browser only — never sent anywhere except Supabase and Anthropic directly.</p>
+      <div class="field">
+        <label>Supabase URL</label>
+        <input type="url" id="cfgUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Supabase Anon Key</label>
+        <input type="password" id="cfgAnon" placeholder="eyJ…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Anthropic API Key</label>
+        <input type="password" id="cfgAnthro" placeholder="sk-ant-…" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="modalCancel">Cancel</button>
+        <button class="btn-primary" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
   <header>
     <div class="wordmark">Cam<span class="dot"></span><em>Note</em></div>
+    <button class="settings-link" id="settingsBtn">settings</button>
   </header>
 
   <div class="wrap">
@@ -355,18 +421,63 @@
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-    // ── Bootstrap ────────────────────────────────────────────────
-    const { SUPABASE_URL, SUPABASE_ANON_KEY, ANTHROPIC_API_KEY } = window.CONFIG;
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ── Keys from localStorage ───────────────────────────────────
+    const LS = {
+      get url()    { return localStorage.getItem('cn_url')    || ''; },
+      get anon()   { return localStorage.getItem('cn_anon')   || ''; },
+      get anthro() { return localStorage.getItem('cn_anthro') || ''; },
+      save(url, anon, anthro) {
+        localStorage.setItem('cn_url',    url);
+        localStorage.setItem('cn_anon',   anon);
+        localStorage.setItem('cn_anthro', anthro);
+      },
+      complete() { return LS.url && LS.anon && LS.anthro; },
+    };
 
-    const input    = document.getElementById('noteInput');
-    const saveBtn  = document.getElementById('saveBtn');
-    const statusEl = document.getElementById('statusMsg');
-    const list     = document.getElementById('notesList');
+    // ── DOM refs ─────────────────────────────────────────────────
+    const input      = document.getElementById('noteInput');
+    const saveBtn    = document.getElementById('saveBtn');
+    const statusEl   = document.getElementById('statusMsg');
+    const list       = document.getElementById('notesList');
+    const backdrop   = document.getElementById('modalBackdrop');
+    const cfgUrl     = document.getElementById('cfgUrl');
+    const cfgAnon    = document.getElementById('cfgAnon');
+    const cfgAnthro  = document.getElementById('cfgAnthro');
 
-    // Detect Mac for hint label
     if (!/mac/i.test(navigator.platform || navigator.userAgentData?.platform || '')) {
       document.getElementById('hintText').textContent = 'Ctrl+↵ to save';
+    }
+
+    // ── Settings modal ───────────────────────────────────────────
+    function openModal() {
+      cfgUrl.value    = LS.url;
+      cfgAnon.value   = LS.anon;
+      cfgAnthro.value = LS.anthro;
+      backdrop.classList.remove('hidden');
+      (cfgUrl.value ? cfgAnthro : cfgUrl).focus();
+    }
+
+    function closeModal() { backdrop.classList.add('hidden'); }
+
+    document.getElementById('settingsBtn').onclick = openModal;
+    document.getElementById('modalCancel').onclick  = closeModal;
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+
+    document.getElementById('modalSave').onclick = () => {
+      const url    = cfgUrl.value.trim();
+      const anon   = cfgAnon.value.trim();
+      const anthro = cfgAnthro.value.trim();
+      if (!url || !anon || !anthro) { alert('All three fields are required.'); return; }
+      LS.save(url, anon, anthro);
+      closeModal();
+      boot();
+    };
+
+    // ── Supabase client (rebuilt when keys change) ───────────────
+    let db;
+    function getDB() {
+      if (!db) db = createClient(LS.url, LS.anon);
+      return db;
     }
 
     // ── Status ───────────────────────────────────────────────────
@@ -388,7 +499,7 @@
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'x-api-key': ANTHROPIC_API_KEY,
+          'x-api-key': LS.anthro,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-allow-browser': 'true',
           'content-type': 'application/json',
@@ -405,10 +516,11 @@
       return JSON.parse(parts[0].text.trim());
     }
 
-    // ── Save ─────────────────────────────────────────────────────
+    // ── Save note ────────────────────────────────────────────────
     async function save() {
       const content = input.value.trim();
       if (!content) return;
+      if (!LS.complete()) { openModal(); return; }
 
       saveBtn.disabled = true;
       status('Thinking…', 'busy');
@@ -420,7 +532,7 @@
         console.warn('Tag inference failed:', e);
       }
 
-      const { data, error } = await db
+      const { data, error } = await getDB()
         .from('Note')
         .insert({ content, source: 'camnote', tags })
         .select()
@@ -432,11 +544,7 @@
       } else {
         input.value = '';
         input.style.height = '';
-        if (tags.length) {
-          status('Tagged: ' + tags.map(t => '#' + t).join(' '), 'ok');
-        } else {
-          status('Saved', 'ok');
-        }
+        status(tags.length ? 'Tagged: ' + tags.map(t => '#' + t).join(' ') : 'Saved', 'ok');
         prepend(data);
         cull();
       }
@@ -444,9 +552,9 @@
       saveBtn.disabled = false;
     }
 
-    // ── Update tags in DB ────────────────────────────────────────
+    // ── Patch tags ───────────────────────────────────────────────
     async function patchTags(id, tags) {
-      const { error } = await db.from('Note').update({ tags }).eq('id', id);
+      const { error } = await getDB().from('Note').update({ tags }).eq('id', id);
       if (error) console.error('Tag update failed:', error);
     }
 
@@ -454,19 +562,16 @@
     function makeCard(note) {
       const card = document.createElement('div');
       card.className = 'note-card';
-      card.dataset.id = note.id;
 
       const body = document.createElement('div');
       body.className = 'note-body';
       body.textContent = note.content;
 
-      const footer = document.createElement('div');
+      const footer   = document.createElement('div');
       footer.className = 'note-footer';
-
-      const tagRow = document.createElement('div');
+      const tagRow   = document.createElement('div');
       tagRow.className = 'tag-row';
-
-      const timeEl = document.createElement('span');
+      const timeEl   = document.createElement('span');
       timeEl.className = 'note-time';
       timeEl.textContent = reltime(note.created_at);
 
@@ -474,27 +579,19 @@
 
       function rebuild() {
         tagRow.innerHTML = '';
-
         tags.forEach((tag, i) => {
           const chip = document.createElement('span');
           chip.className = 'chip';
           chip.textContent = tag;
-
           const x = document.createElement('button');
           x.className = 'chip-x';
           x.textContent = '×';
           x.title = 'Remove';
-          x.onclick = () => {
-            tags.splice(i, 1);
-            rebuild();
-            patchTags(note.id, tags);
-          };
-
+          x.onclick = () => { tags.splice(i, 1); rebuild(); patchTags(note.id, tags); };
           chip.appendChild(x);
           tagRow.appendChild(chip);
         });
 
-        // + add
         const addBtn = document.createElement('button');
         addBtn.className = 'chip-add';
         addBtn.textContent = '+ tag';
@@ -505,13 +602,11 @@
           inp.placeholder = 'tag…';
           tagRow.appendChild(inp);
           inp.focus();
-
           const commit = () => {
             const v = inp.value.trim().toLowerCase().replace(/\s+/g, '-');
             if (v && !tags.includes(v)) { tags.push(v); patchTags(note.id, tags); }
             rebuild();
           };
-
           inp.onkeydown = e => {
             if (e.key === 'Enter')  { e.preventDefault(); commit(); }
             if (e.key === 'Escape') rebuild();
@@ -543,10 +638,10 @@
     // ── Relative time ────────────────────────────────────────────
     function reltime(iso) {
       const sec = Math.floor((Date.now() - new Date(iso)) / 1000);
-      if (sec < 30)          return 'just now';
-      if (sec < 3600)        return Math.floor(sec / 60) + 'm ago';
-      if (sec < 86400)       return Math.floor(sec / 3600) + 'h ago';
-      if (sec < 86400 * 6)   return Math.floor(sec / 86400) + 'd ago';
+      if (sec < 30)        return 'just now';
+      if (sec < 3600)      return Math.floor(sec / 60) + 'm ago';
+      if (sec < 86400)     return Math.floor(sec / 3600) + 'h ago';
+      if (sec < 86400 * 6) return Math.floor(sec / 86400) + 'd ago';
       return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
@@ -559,7 +654,7 @@
           <div class="skel" style="width:38%;height:10px"></div>
         </div>`;
 
-      const { data, error } = await db
+      const { data, error } = await getDB()
         .from('Note')
         .select('*')
         .eq('source', 'camnote')
@@ -569,17 +664,24 @@
       list.innerHTML = '';
 
       if (error) {
-        list.innerHTML = '<p class="empty-state">Couldn\'t load notes — check config.</p>';
+        list.innerHTML = "<p class='empty-state'>Couldn't load notes — check settings.</p>";
         console.error(error);
         return;
       }
 
       if (!data?.length) {
-        list.innerHTML = '<p class="empty-state">Nothing yet — write your first note above.</p>';
+        list.innerHTML = "<p class='empty-state'>Nothing yet — write your first note above.</p>";
         return;
       }
 
       data.forEach(n => list.appendChild(makeCard(n)));
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────
+    function boot() {
+      db = null; // reset client so it picks up new keys
+      if (!LS.complete()) { openModal(); return; }
+      load();
     }
 
     // ── Auto-grow textarea ───────────────────────────────────────
@@ -588,18 +690,13 @@
       input.style.height = input.scrollHeight + 'px';
     });
 
-    // ── Keyboard shortcut ────────────────────────────────────────
     input.addEventListener('keydown', e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        save();
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(); }
     });
 
     saveBtn.addEventListener('click', save);
 
-    // ── Go ───────────────────────────────────────────────────────
-    load();
+    boot();
   </script>
 
 </body>
