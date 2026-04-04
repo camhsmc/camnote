@@ -251,6 +251,50 @@
       color: var(--ink-faint); white-space: nowrap; flex-shrink: 0;
     }
 
+    /* ── Note actions (edit / delete) ──────────────────────────── */
+    .note-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .note-action-btn {
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      color: var(--ink-faint);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .note-action-btn:hover { color: var(--accent); }
+    .note-action-btn.delete:hover { color: var(--error); }
+
+    .note-edit-area {
+      width: 100%;
+      font-family: var(--serif);
+      font-size: 0.95rem;
+      line-height: 1.68;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 5px;
+      padding: 10px 13px;
+      outline: none;
+      resize: none;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .note-edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
     /* ── Empty / skeleton ───────────────────────────────────────── */
     .empty-state {
       text-align: center; padding: 40px 0 20px;
@@ -409,7 +453,7 @@
       <textarea id="noteInput" placeholder="What's on your mind…" autocomplete="off" spellcheck="true"></textarea>
       <div class="entry-footer">
         <span class="status-msg" id="statusMsg"></span>
-        <span class="hint" id="hintText">⌘↵ to save</span>
+        <span class="hint" id="hintText">↵ save · ⌘↵ new line</span>
         <button class="save-btn" id="saveBtn">Save</button>
       </div>
     </div>
@@ -445,7 +489,7 @@
     const cfgAnthro  = document.getElementById('cfgAnthro');
 
     if (!/mac/i.test(navigator.platform || navigator.userAgentData?.platform || '')) {
-      document.getElementById('hintText').textContent = 'Ctrl+↵ to save';
+      document.getElementById('hintText').textContent = '↵ save · Ctrl+↵ new line';
     }
 
     // ── Settings modal ───────────────────────────────────────────
@@ -523,7 +567,7 @@
       if (!LS.complete()) { openModal(); return; }
 
       saveBtn.disabled = true;
-      status('Thinking…', 'busy');
+      status('Saving…', 'busy');
 
       let tags = [];
       try {
@@ -544,9 +588,20 @@
       } else {
         input.value = '';
         input.style.height = '';
-        status(tags.length ? 'Tagged: ' + tags.map(t => '#' + t).join(' ') : 'Saved', 'ok');
-        prepend(data);
-        cull();
+        // Re-fetch the note after a short delay so Edge Function tags are included
+        setTimeout(async () => {
+          const { data: fresh } = await getDB()
+            .from('Note')
+            .select('*')
+            .eq('id', data.id)
+            .single();
+          const noteToRender = fresh || data;
+          status(noteToRender.tags?.length
+            ? 'Tagged: ' + noteToRender.tags.map(t => '#' + t).join(' ')
+            : 'Saved', 'ok');
+          prepend(noteToRender);
+          cull();
+        }, 1800);
       }
 
       saveBtn.disabled = false;
@@ -558,23 +613,62 @@
       if (error) console.error('Tag update failed:', error);
     }
 
+    // ── Patch content ────────────────────────────────────────────
+    async function patchContent(id, content) {
+      const { error } = await getDB().from('Note').update({ content }).eq('id', id);
+      if (error) console.error('Content update failed:', error);
+    }
+
+    // ── Delete note ──────────────────────────────────────────────
+    async function deleteNote(id, card) {
+      if (!confirm('Delete this note?')) return;
+      const { error } = await getDB().from('Note').delete().eq('id', id);
+      if (error) { console.error('Delete failed:', error); return; }
+      card.remove();
+      if (!list.querySelector('.note-card')) {
+        list.innerHTML = "<p class='empty-state'>Nothing yet — write your first note above.</p>";
+      }
+    }
+
     // ── Render card ──────────────────────────────────────────────
     function makeCard(note) {
       const card = document.createElement('div');
       card.className = 'note-card';
+      card.dataset.id = note.id;
 
+      // ── Body (view mode) ──
       const body = document.createElement('div');
       body.className = 'note-body';
       body.textContent = note.content;
 
-      const footer   = document.createElement('div');
+      // ── Footer ──
+      const footer = document.createElement('div');
       footer.className = 'note-footer';
-      const tagRow   = document.createElement('div');
+      const tagRow = document.createElement('div');
       tagRow.className = 'tag-row';
-      const timeEl   = document.createElement('span');
+
+      // ── Actions row (time + edit + delete) ──
+      const actions = document.createElement('div');
+      actions.className = 'note-actions';
+
+      const timeEl = document.createElement('span');
       timeEl.className = 'note-time';
       timeEl.textContent = reltime(note.created_at);
 
+      const editBtn = document.createElement('button');
+      editBtn.className = 'note-action-btn';
+      editBtn.textContent = 'edit';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'note-action-btn delete';
+      delBtn.textContent = 'delete';
+      delBtn.onclick = () => deleteNote(note.id, card);
+
+      actions.appendChild(timeEl);
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      // ── Tags ──
       let tags = Array.isArray(note.tags) ? [...note.tags] : [];
 
       function rebuild() {
@@ -591,7 +685,6 @@
           chip.appendChild(x);
           tagRow.appendChild(chip);
         });
-
         const addBtn = document.createElement('button');
         addBtn.className = 'chip-add';
         addBtn.textContent = '+ tag';
@@ -616,9 +709,63 @@
         tagRow.appendChild(addBtn);
       }
 
+      // ── Edit mode ──
+      editBtn.onclick = () => {
+        // swap body for textarea
+        const ta = document.createElement('textarea');
+        ta.className = 'note-edit-area';
+        ta.value = note.content;
+        ta.rows = 3;
+        card.insertBefore(ta, body);
+        body.style.display = 'none';
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+        ta.addEventListener('input', () => {
+          ta.style.height = 'auto';
+          ta.style.height = ta.scrollHeight + 'px';
+        });
+
+        // swap edit/delete for save/cancel
+        const editActions = document.createElement('div');
+        editActions.className = 'note-edit-actions';
+        const saveEdit = document.createElement('button');
+        saveEdit.className = 'btn-primary';
+        saveEdit.style.cssText = 'font-size:0.75rem;padding:5px 14px;';
+        saveEdit.textContent = 'Save';
+        const cancelEdit = document.createElement('button');
+        cancelEdit.className = 'btn-ghost';
+        cancelEdit.style.cssText = 'font-size:0.75rem;padding:5px 14px;';
+        cancelEdit.textContent = 'Cancel';
+        editActions.appendChild(saveEdit);
+        editActions.appendChild(cancelEdit);
+        card.insertBefore(editActions, footer);
+        actions.style.display = 'none';
+
+        ta.focus();
+
+        cancelEdit.onclick = () => {
+          ta.remove();
+          editActions.remove();
+          body.style.display = '';
+          actions.style.display = '';
+        };
+
+        saveEdit.onclick = async () => {
+          const newContent = ta.value.trim();
+          if (!newContent) return;
+          await patchContent(note.id, newContent);
+          note.content = newContent;
+          body.textContent = newContent;
+          ta.remove();
+          editActions.remove();
+          body.style.display = '';
+          actions.style.display = '';
+        };
+      };
+
       rebuild();
       footer.appendChild(tagRow);
-      footer.appendChild(timeEl);
+      footer.appendChild(actions);
       card.appendChild(body);
       card.appendChild(footer);
       return card;
@@ -691,7 +838,19 @@
     });
 
     input.addEventListener('keydown', e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(); }
+      if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        save();
+      }
+      // Cmd+Enter or Ctrl+Enter inserts a newline
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        const start = input.selectionStart;
+        const end   = input.selectionEnd;
+        input.value = input.value.slice(0, start) + '\n' + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + 1;
+        input.dispatchEvent(new Event('input')); // trigger auto-grow
+      }
     });
 
     saveBtn.addEventListener('click', save);
